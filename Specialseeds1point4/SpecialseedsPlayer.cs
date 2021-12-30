@@ -45,14 +45,18 @@ namespace Specialseeds1point4
         public float breakStoneCooldown;
         public List<BreakTile> tilesToBreak = new List<BreakTile>();
 
-        
 
+        public override void OnEnterWorld(Player player)
+        {
+
+        }
 
         public override void PostUpdate()
         {
             worldSeed = Main.ActiveWorldFileData.Name;
-            
-            if(tilesToBreak.Count > 0)
+
+            Main.NewText("Current boss: " + SpecialseedsWorld.bossList.ElementAt(3).type);
+            if (tilesToBreak.Count > 0)
             {
                 if(MathF.Abs(tilesToBreak.FirstOrDefault().playerX - tilesToBreak.FirstOrDefault().x) < 15)
                     WorldGen.KillTile(tilesToBreak.FirstOrDefault().x, tilesToBreak.FirstOrDefault().y);

@@ -11,9 +11,17 @@ using Terraria.IO;
 using Specialseeds1point4.Tiles;
 using Terraria.Audio;
 using AdvancedWorldGen.Base;
+using Terraria.ModLoader.IO;
 
 namespace Specialseeds1point4
 {
+    public class ListBoss
+    {
+        public int type;
+        public string name;
+    }
+
+
     public class SpecialseedsWorld : ModSystem
     {
 
@@ -24,7 +32,40 @@ namespace Specialseeds1point4
         public int worldBaubles;
         public int meteors;
         public int zone;
+        public static List<ListBoss> bossList = new List<ListBoss>();
         
+
+
+
+        public static void RandomizeBosses()
+        {
+            for (int i = 0; i < bossList.Count; i++)
+            {
+                int bossID = Main.rand.Next(bossList.Count);
+                bossList.Add(bossList.ElementAt(bossID));
+                bossList.RemoveAt(bossID + 1);
+                Main.NewText(bossList.ElementAt(i).name);
+                
+            }
+
+        }
+
+        public override void SaveWorldData(TagCompound tag)
+        {
+
+            tag.Add("savedBossList", bossList);
+
+        }
+
+        public override void LoadWorldData(TagCompound tag)
+        {
+
+            bossList = tag.Get<List<ListBoss>>("savedBossList");
+
+        }
+
+
+
 
         public override void PostUpdatePlayers()
         {
@@ -50,15 +91,46 @@ namespace Specialseeds1point4
                 }
 
             }
+
+
+
         }
- 
+
+
+        public static void ModifyBossList()
+        {
+
+            NPC npc = new NPC();
+            for (int i = 1; i < 668; i++)
+            {
+                npc.CloneDefaults(i);
+                if (npc.boss)
+                {
+                    ListBoss boss = new ListBoss();
+                    boss.type = i;
+                    boss.name = npc.FullName;
+                    bossList.Add(boss);
+                    if(bossList.Contains(boss))
+                        SoundEngine.PlaySound(i);
+
+
+                }
+
+
+            }
+            RandomizeBosses();
+
+        }
+
 
 
 
         public override void ModifyWorldGenTasks(List<GenPass> tasks, ref float totalWeight)
         {
-
-
+            if (API.OptionsContains("Bossmania") && bossList.Count == 0)
+            {
+                ModifyBossList();
+            }
 
             if (API.OptionsContains("Icemania"))
                 seedsToDo.Add(1);

@@ -45,7 +45,7 @@ namespace Specialseeds1point4
         public override void SetDefaults(NPC npc)
         {
             Player player = Main.player[Main.myPlayer];
-
+            
             if (!modified)
             {
                 worldSeed = Main.ActiveWorldFileData.Name;
@@ -121,6 +121,9 @@ namespace Specialseeds1point4
 
             }
 
+
+
+
                 
             if (API.OptionsContains("Lifesteal"))
             {
@@ -131,14 +134,33 @@ namespace Specialseeds1point4
                     cooldown = cooldownCount;
 
             }
-            if (npc.life <= 0)
-                if (API.OptionsContains("Lifesteal"))
-                    if (Main.rand.Next(10) == 0)
-                    {
-                        Item.NewItem(npc.getRect(), ItemType<LifeGelly>(), 1);
 
-                    }
             npc.netUpdate = true;
+        }
+
+        public override void OnKill(NPC npc)
+        {
+            if (API.OptionsContains("Lifesteal"))
+                if (Main.rand.Next(10) == 0)
+                {
+                    Item.NewItem(npc.getRect(), ItemType<LifeGelly>(), 1);
+
+                }
+
+            
+
+            for (int i = 0; i < SpecialseedsWorld.bossList.Count; i++)
+            {
+                if (SpecialseedsWorld.bossList.ElementAt(i).type == npc.type)
+                {
+                    SpecialseedsWorld.bossList.RemoveAt(i);
+                    Main.NewText("Current boss: " + SpecialseedsWorld.bossList.ElementAt(0).type);
+                }
+                    
+
+            }
+            
+
         }
 
         public override void HitEffect(NPC npc, int hitDirection, double damage)
@@ -212,6 +234,8 @@ namespace Specialseeds1point4
             npc.netUpdate = true;
 
         }
+
+        
 
 
 

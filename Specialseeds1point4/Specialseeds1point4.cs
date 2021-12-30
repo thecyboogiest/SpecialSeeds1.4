@@ -27,7 +27,7 @@ namespace Specialseeds1point4
             API.RegisterOption(this, "Slimed", false);
             API.RegisterOption(this, "Healthy", false);
             API.RegisterOption(this, "Murdermania", false);
-
+            API.RegisterOption(this, "Bossmania", false);
         }
 
 
