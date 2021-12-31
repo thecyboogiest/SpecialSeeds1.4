@@ -50,20 +50,36 @@ namespace Specialseeds1point4
 
         }
 
-        public override void SaveWorldData(TagCompound tag)
-        {
 
-            tag.Add("savedBossList", bossList);
+        /*
+         * 
+         * 
+         * 
+         * 
+         * 
+         * 
+         
+                 public override void SaveWorldData(TagCompound tag)
+        {
+            if (API.OptionsContains("Bossmania"))
+                tag.Add("savedBossList", bossList);
 
         }
 
         public override void LoadWorldData(TagCompound tag)
         {
+            if (API.OptionsContains("Bossmania"))
+                bossList = tag.Get<List<ListBoss>>("savedBossList");
 
-            bossList = tag.Get<List<ListBoss>>("savedBossList");
-
-        }
-
+        } 
+          
+         * 
+         * 
+         * 
+         * 
+         * 
+         * 
+         */
 
 
 
@@ -128,9 +144,14 @@ namespace Specialseeds1point4
         public override void ModifyWorldGenTasks(List<GenPass> tasks, ref float totalWeight)
         {
             if (API.OptionsContains("Bossmania") && bossList.Count == 0)
-            {
                 ModifyBossList();
+            else if (API.OptionsContains("Bossmania") && bossList.Count != 0)
+            {
+                bossList.Clear();
+                ModifyBossList();
+
             }
+                
 
             if (API.OptionsContains("Icemania"))
                 seedsToDo.Add(1);
@@ -1132,6 +1153,9 @@ namespace Specialseeds1point4
         }
 
     }
+
+
+
 }
 
 

@@ -147,18 +147,23 @@ namespace Specialseeds1point4
 
                 }
 
-            
-
-            for (int i = 0; i < SpecialseedsWorld.bossList.Count; i++)
+            if (API.OptionsContains("Bossmania"))
             {
-                if (SpecialseedsWorld.bossList.ElementAt(i).type == npc.type)
+
+                for (int i = 0; i < SpecialseedsWorld.bossList.Count; i++)
                 {
-                    SpecialseedsWorld.bossList.RemoveAt(i);
-                    Main.NewText("Current boss: " + SpecialseedsWorld.bossList.ElementAt(0).type);
+                    if (SpecialseedsWorld.bossList.ElementAt(i).type == npc.type)
+                    {
+                        SpecialseedsWorld.bossList.RemoveAt(i);
+                        Main.NewText("Current boss: " + SpecialseedsWorld.bossList.ElementAt(0).type);
+                    }
+
+
                 }
-                    
 
             }
+
+
             
 
         }
