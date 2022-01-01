@@ -30,7 +30,7 @@ namespace Specialseeds1point4
             if (API.OptionsContains("NPCmania"))
             {
                 spawnInfo.spawnTileType = 0;
-                NPC npc = new NPC();
+                NPC npc = new();
                 for(int i = 1; i < 668; i++)
                 {
                     npc.CloneDefaults(i);
@@ -44,8 +44,7 @@ namespace Specialseeds1point4
 
         public override void SetDefaults(NPC npc)
         {
-            Player player = Main.player[Main.myPlayer];
-            
+
             if (!modified)
             {
                 worldSeed = Main.ActiveWorldFileData.Name;
@@ -93,7 +92,26 @@ namespace Specialseeds1point4
                 }
 
 
+                if (API.OptionsContains("Bossmania"))
+                {
+                    if (SpecialseedsWorld.IDBossList.Contains(npc.type))
+                    {
 
+                        Main.NewText("rt: " + npc.type + " | pt: " + SpecialseedsWorld.IDBossList.ElementAt(SpecialseedsWorld.IDBossList.IndexOf(npc.type)) + " | p: " + SpecialseedsWorld.IDBossList.IndexOf(npc.type));
+                        Main.NewText("rtp: " + SpecialseedsWorld.realIDBossList.IndexOf(npc.type));
+                        if (SpecialseedsWorld.IDBossList.IndexOf(npc.type) < SpecialseedsWorld.realIDBossList.IndexOf(npc.type))
+                        {
+                            npc.life -= npc.life / (SpecialseedsWorld.bossList.Count - SpecialseedsWorld.IDBossList.IndexOf(npc.type));
+                            npc.lifeMax -= npc.life / (SpecialseedsWorld.bossList.Count - SpecialseedsWorld.IDBossList.IndexOf(npc.type));
+                        }
+                        else if (SpecialseedsWorld.IDBossList.IndexOf(npc.type) > SpecialseedsWorld.realIDBossList.IndexOf(npc.type))
+                        {
+                            npc.lifeMax += npc.life / (SpecialseedsWorld.bossList.Count - SpecialseedsWorld.IDBossList.IndexOf(npc.type));
+                            npc.life += npc.life / (SpecialseedsWorld.bossList.Count - SpecialseedsWorld.IDBossList.IndexOf(npc.type));
+                        }
+                    }
+
+                }
 
             }
 
@@ -112,10 +130,10 @@ namespace Specialseeds1point4
                 if (!npc.boss)
                 {
                     if(!Main.hardMode)
-                        npc.life = (npc.life / 4);
+                        npc.life /= 4;
 
                     if (Main.hardMode)
-                        npc.life = (npc.life / 2);
+                        npc.life /= 2;
 
                 }
 
@@ -124,7 +142,7 @@ namespace Specialseeds1point4
 
 
 
-                
+
             if (API.OptionsContains("Lifesteal"))
             {
 
@@ -150,15 +168,10 @@ namespace Specialseeds1point4
             if (API.OptionsContains("Bossmania"))
             {
 
-                for (int i = 0; i < SpecialseedsWorld.bossList.Count; i++)
+                if (SpecialseedsWorld.bossList.ElementAt(SpecialseedsWorld.currentBossInList).type == npc.type)
                 {
-                    if (SpecialseedsWorld.bossList.ElementAt(i).type == npc.type)
-                    {
-                        SpecialseedsWorld.bossList.RemoveAt(i);
-                        Main.NewText("Current boss: " + SpecialseedsWorld.bossList.ElementAt(0).type);
-                    }
-
-
+                    SpecialseedsWorld.currentBossInList++;
+                    Main.NewText("Current boss: " + SpecialseedsWorld.bossList.ElementAt(SpecialseedsWorld.currentBossInList).name);
                 }
 
             }

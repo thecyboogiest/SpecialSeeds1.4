@@ -24,6 +24,8 @@ namespace Specialseeds1point4
         public override void SetDefaults(Item item)
         {
             worldSeed = Main.ActiveWorldFileData.Name;
+
+
         }
 
 
@@ -46,6 +48,7 @@ namespace Specialseeds1point4
 
                 }
 
+                
             }
         }
 

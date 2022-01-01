@@ -12,13 +12,37 @@ using Specialseeds1point4.Tiles;
 using Terraria.Audio;
 using AdvancedWorldGen.Base;
 using Terraria.ModLoader.IO;
+using System;
 
 namespace Specialseeds1point4
 {
-    public class ListBoss
+    public class ListBoss : TagSerializable
     {
+        public static readonly Func<TagCompound, ListBoss> DESERIALIZER = Load;
         public int type;
         public string name;
+
+
+
+        public TagCompound SerializeData()
+        {
+            return new TagCompound
+            {
+                ["type"] = type,
+                ["name"] = name
+            };
+        }
+
+        public static ListBoss Load(TagCompound tag)
+        {
+            var LoadListBoss = new ListBoss
+            {
+                type = tag.GetInt("type"),
+                name = tag.GetString("name")
+            };
+            return LoadListBoss;
+        }
+
     }
 
 
@@ -26,60 +50,73 @@ namespace Specialseeds1point4
     {
 
         //public Mod advencedWorldGen = ModLoader.GetMod("AdvencedWorldGen");
-        public List<int> seedsToDo = new List<int>();
+        public List<int> seedsToDo = new();
         public int currentSelectedSeed;
         public int worldSpikes;
         public int worldBaubles;
         public int meteors;
         public int zone;
-        public static List<ListBoss> bossList = new List<ListBoss>();
+        public static List<ListBoss> bossList = new();
+        public static List<int> realIDBossList = new();
+        public static List<int> IDBossList = new();
+        public static int currentBossInList;
         
 
 
 
         public static void RandomizeBosses()
         {
-            for (int i = 0; i < bossList.Count; i++)
+
+            for (int i = 0; i < bossList.Count * 2; i++)
             {
                 int bossID = Main.rand.Next(bossList.Count);
-                bossList.Add(bossList.ElementAt(bossID));
-                bossList.RemoveAt(bossID + 1);
-                Main.NewText(bossList.ElementAt(i).name);
-                
+                int zeroBossID = Main.rand.Next(bossList.Count);
+
+                if (bossID != 0)
+                {
+                    bossList.Add(bossList.ElementAt(bossID));
+
+                    bossList.RemoveAt(bossID + 1);
+
+                }
+                else
+                {
+
+                    bossList.Insert(zeroBossID, bossList.ElementAt(0));
+
+                    bossList.RemoveAt(0);
+
+                }
+
+
+
             }
 
+
+            for (int t = 0; t <= bossList.Count; t++)
+            {
+                IDBossList.Add(bossList.ElementAt(t).type);
+                
+            }
         }
 
 
-        /*
-         * 
-         * 
-         * 
-         * 
-         * 
-         * 
-         
-                 public override void SaveWorldData(TagCompound tag)
-        {
-            if (API.OptionsContains("Bossmania"))
-                tag.Add("savedBossList", bossList);
 
+
+        public override void SaveWorldData(TagCompound tag)
+        {
+            tag["savedBossList"] = bossList;
+            tag["savedIDBossList"] = IDBossList;
+            tag["savedRealIDBossList"] = realIDBossList;
         }
 
         public override void LoadWorldData(TagCompound tag)
         {
-            if (API.OptionsContains("Bossmania"))
-                bossList = tag.Get<List<ListBoss>>("savedBossList");
 
-        } 
-          
-         * 
-         * 
-         * 
-         * 
-         * 
-         * 
-         */
+            bossList = tag.GetList<ListBoss>("savedBossList").ToList();
+            IDBossList = tag.GetList<int>("savedIDBossList").ToList();
+            realIDBossList = tag.GetList<int>("savedRealIDBossList").ToList();
+        }
 
 
 
@@ -87,7 +124,7 @@ namespace Specialseeds1point4
         {
 
 
-            for (int i = 0; i < Main.PlayerList.Count(); i++)
+            for (int i = 0; i < Main.PlayerList.Count; i++)
             {
                 Player player = Main.player[i];
                 SceneMetrics metrics = Main.SceneMetrics;
@@ -116,23 +153,24 @@ namespace Specialseeds1point4
         public static void ModifyBossList()
         {
 
-            NPC npc = new NPC();
+            NPC npc = new();
             for (int i = 1; i < 668; i++)
             {
-                npc.CloneDefaults(i);
+                npc.SetDefaults(i);
+                
                 if (npc.boss)
                 {
-                    ListBoss boss = new ListBoss();
-                    boss.type = i;
-                    boss.name = npc.FullName;
+                    realIDBossList.Add(i);
+                    ListBoss boss = new()
+                    {
+                        type = i,
+                        name = npc.GivenName
+                    };
                     bossList.Add(boss);
-                    if(bossList.Contains(boss))
-                        SoundEngine.PlaySound(i);
-
-
+                    
+                    
                 }
-
-
+                
             }
             RandomizeBosses();
 
@@ -145,14 +183,6 @@ namespace Specialseeds1point4
         {
             if (API.OptionsContains("Bossmania") && bossList.Count == 0)
                 ModifyBossList();
-            else if (API.OptionsContains("Bossmania") && bossList.Count != 0)
-            {
-                bossList.Clear();
-                ModifyBossList();
-
-            }
-                
-
             if (API.OptionsContains("Icemania"))
                 seedsToDo.Add(1);
             if (API.OptionsContains("Junglemania"))
@@ -801,7 +831,7 @@ namespace Specialseeds1point4
 
 
 
-        public void GenerateFloor(ushort mainTile, bool useAltTile = false, ushort altTile = TileID.Dirt)
+        public static void GenerateFloor(ushort mainTile, bool useAltTile = false, ushort altTile = TileID.Dirt)
         {
             int bottomLeft = 0;
             int bottomRight = 0;
@@ -965,7 +995,7 @@ namespace Specialseeds1point4
 
         }
 
-        public void GenerateSpike(int d, int e, int spikeHieghtFromCenter, int spikeDepthFromCenter, ushort tileType, ushort altTileType,bool displacement, ushort wallType, ushort altWalltype, bool generatePlatform, float minWide, float maxWide, bool generateChest, int chestType, int chestDepth)
+        public static void GenerateSpike(int d, int e, int spikeHieghtFromCenter, int spikeDepthFromCenter, ushort tileType, ushort altTileType,bool displacement, ushort wallType, ushort altWalltype, bool generatePlatform, float minWide, float maxWide, bool generateChest, int chestType, int chestDepth)
         {
 
 
@@ -1142,7 +1172,7 @@ namespace Specialseeds1point4
             }
 
         }
-        public bool CheckValidTile(int n, int m)
+        public static bool CheckValidTile(int n, int m)
         {
 
             if (Main.tile[n, m].type != TileID.BlueDungeonBrick || Main.tile[n, m].type != TileID.GreenDungeonBrick || Main.tile[n, m].type != TileID.PinkDungeonBrick)

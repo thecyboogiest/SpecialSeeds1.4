@@ -48,7 +48,10 @@ namespace Specialseeds1point4
 
         public override void OnEnterWorld(Player player)
         {
-            if(SpecialseedsWorld.bossList.Count == 0)
+            if(API.OptionsContains("Bossmania"))
+                Main.NewText("Current boss: " + SpecialseedsWorld.bossList.ElementAt(SpecialseedsWorld.currentBossInList).name);
+
+            if (SpecialseedsWorld.bossList.Count == 0)
             {
 
                 SpecialseedsWorld.ModifyBossList();
@@ -59,11 +62,7 @@ namespace Specialseeds1point4
         public override void PostUpdate()
         {
             worldSeed = Main.ActiveWorldFileData.Name;
-            if (API.OptionsContains("Bossmania"))
-                if (SpecialseedsWorld.bossList.Count > 2)
-                    Main.NewText("Current boss: " + SpecialseedsWorld.bossList.ElementAt(3).type);
-            else
-                    Main.NewText("Current bosses: " + SpecialseedsWorld.bossList.Count());
+
             if (tilesToBreak.Count > 0)
             {
                 if(MathF.Abs(tilesToBreak.FirstOrDefault().playerX - tilesToBreak.FirstOrDefault().x) < 15)
