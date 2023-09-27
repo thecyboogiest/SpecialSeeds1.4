@@ -1,4 +1,0 @@
-displayName = Special Seeds 1.4
-author = Joven
-version = 0.5
-modReferences = AdvancedWorldGen
