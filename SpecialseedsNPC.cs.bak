@@ -1,0 +1,183 @@
+using System;
+using System.Collections.Generic;
+using AdvancedWorldGen.Base;
+using Microsoft.Xna.Framework;
+using Terraria;
+using Terraria.ModLoader;
+
+namespace Specialseeds1point4;
+
+public class SpecialseedsNPC : GlobalNPC
+{
+	public string worldSeed = Main.ActiveWorldFileData.Name;
+
+	private int cooldown;
+
+	private int cooldownCount = 50;
+
+	private bool modified;
+
+	public override bool InstancePerEntity => true;
+
+	public override void EditSpawnPool(IDictionary<int, float> pool, NPCSpawnInfo spawnInfo)
+	{
+		worldSeed = Main.ActiveWorldFileData.Name;
+		if (!API.OptionsContains(new string[1] { "NPCmania" }))
+		{
+			return;
+		}
+		spawnInfo.spawnTileType = 0;
+		NPC npc = new NPC();
+		for (int i = 1; i < 668; i++)
+		{
+			npc.CloneDefaults(i);
+			if (!npc.boss)
+			{
+				pool.Add(i, Main.rand.Next(900, 1100));
+			}
+		}
+	}
+
+	public override void SetDefaults(NPC npc)
+	{
+		//IL_0174: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0179: Unknown result type (might be due to invalid IL or missing references)
+		_ = Main.player[Main.myPlayer];
+		if (!modified)
+		{
+			worldSeed = Main.ActiveWorldFileData.Name;
+			modified = true;
+			if (API.OptionsContains(new string[1] { "Gigantism" }))
+			{
+				if (!npc.boss)
+				{
+					npc.scale *= 2f;
+					npc.width *= 2;
+					npc.height *= 2;
+					npc.lifeMax *= 2;
+					npc.life *= 2;
+					npc.damage *= 2;
+					npc.position.Y -= npc.height;
+				}
+				else
+				{
+					npc.scale *= 2f;
+					npc.width *= 2;
+					npc.height *= 2;
+				}
+			}
+			if (API.OptionsContains(new string[1] { "Slimed" }))
+			{
+				if (!npc.boss && !npc.buffImmune[31])
+				{
+					npc.aiStyle = 1;
+					npc.noGravity = false;
+				}
+				npc.AddBuff(137, 9999);
+			}
+			if (API.OptionsContains(new string[1] { "Healthy" }))
+			{
+				npc.lifeMax *= 5;
+				npc.life *= 5;
+				npc.defense = 0;
+				npc.color = new Color(0, 255, 0, 0);
+			}
+		}
+		npc.netUpdate = true;
+	}
+
+	public override void AI(NPC npc)
+	{
+		//IL_00c3: Unknown result type (might be due to invalid IL or missing references)
+		worldSeed = Main.ActiveWorldFileData.Name;
+		if (API.OptionsContains(new string[1] { "NPCmania" }) && !npc.boss)
+		{
+			if (!Main.hardMode)
+			{
+				npc.life /= 4;
+			}
+			if (Main.hardMode)
+			{
+				npc.life /= 2;
+			}
+		}
+		if (API.OptionsContains(new string[1] { "Lifesteal" }))
+		{
+			if (cooldown < cooldownCount)
+			{
+				cooldown++;
+			}
+			else
+			{
+				cooldown = cooldownCount;
+			}
+		}
+		if (npc.life <= 0 && API.OptionsContains(new string[1] { "Lifesteal" }) && Main.rand.Next(10) == 0)
+		{
+			Item.NewItem(npc.getRect(), ModContent.ItemType<LifeGelly>(), 1, false, 0, false, false);
+		}
+		npc.netUpdate = true;
+	}
+
+	public override void HitEffect(NPC npc, int hitDirection, double damage)
+	{
+		//IL_0051: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0056: Unknown result type (might be due to invalid IL or missing references)
+		worldSeed = Main.ActiveWorldFileData.Name;
+		if (API.OptionsContains(new string[1] { "Healthy" }))
+		{
+			float life2 = npc.life;
+			float lifeMax2 = npc.lifeMax;
+			int lifeHue = (int)Math.Floor(355f * (life2 / lifeMax2));
+			npc.color = new Color(355 - lifeHue, lifeHue, 0, 0);
+		}
+		else if (API.OptionsContains(new string[1] { "TBD" }))
+		{
+			float life = npc.life;
+			float lifeMax = npc.lifeMax;
+			npc.alpha = 255 - (int)Math.Floor(255f * (life / lifeMax));
+		}
+		npc.netUpdate = true;
+	}
+
+	public override void EditSpawnRate(Player player, ref int spawnRate, ref int maxSpawns)
+	{
+		if (API.OptionsContains(new string[1] { "Murdermania" }))
+		{
+			spawnRate *= 50;
+			maxSpawns *= 4;
+		}
+	}
+
+	public override void ScaleExpertStats(NPC npc, int numPlayers, float bossLifeScale)
+	{
+		if (numPlayers <= 10)
+		{
+			cooldownCount -= numPlayers * 5;
+		}
+		else
+		{
+			cooldownCount = 10;
+		}
+		npc.netUpdate = true;
+	}
+
+	public override void OnHitPlayer(NPC npc, Player target, int damage, bool crit)
+	{
+		worldSeed = Main.ActiveWorldFileData.Name;
+		if (API.OptionsContains(new string[1] { "Lifesteal" }) && cooldown == cooldownCount)
+		{
+			if (npc.life == npc.lifeMax)
+			{
+				npc.lifeMax += npc.damage * 2;
+				npc.life = npc.lifeMax;
+			}
+			else
+			{
+				npc.life += npc.damage * 2;
+			}
+			cooldown = 0;
+		}
+		npc.netUpdate = true;
+	}
+}

@@ -1,0 +1,8 @@
+Items: {
+	LifeGelly: {
+		DisplayName: Life Gelly
+		Tooltip: ""
+	}
+}
+
+Mods.Specialseeds1point4.Icemania.Description: Makes the world a snowy wonderland, with lots of spikes of ice and snow

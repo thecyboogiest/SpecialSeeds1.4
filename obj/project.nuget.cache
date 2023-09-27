@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "cgDv0RhydIf0o2nELYiKXbCD/Ca1EZY/5UHMca/wjxrPnJOA7HEGA6ROfd98DxlNHsK5YQX2vx3bovDTEhB0Yg==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\boban\\OneDrive\\Documents\\My Games\\Terraria\\tModLoader\\ModSources\\Specialseeds1point4\\Specialseeds1point4.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\boban\\.nuget\\packages\\tmodloader.codeassist\\0.1.5\\tmodloader.codeassist.0.1.5.nupkg.sha512"
+  ],
+  "logs": []
+}

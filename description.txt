@@ -1,0 +1,87 @@
+Built for 1.4 version of tModLoader. 
+Special Seeds is a mod that adds seeds to the game simmilar to "Not the bees!" and, "The Constant".
+
+Im sorry for the delay in updating this mod, hopefully i can stay on top of it from now on...
+
+!! Dependent on Advanced World Gen !!
+Select the seeds you want to use when creating a world by clicking the gear icon next to SEED
+
+Thank you for downloading my mod!!!
+
+SEEDS
+
+-Custom
+This is used for custom seeds!
+Customize YOUR OWN seed made just for YOU!
+The customization is pretty simple at the moment, but dont forget, you can mix seeds!
+
+USAGE:
+-----------------------------------------
+SEED,tileid,tileid,tileid,ect
+
+
+EXAMPLES:
+18834834,120,59
+Mudbrick(120) and Mud(59) World with the seed 18834834
+
+thisIsTheSEED,194
+Bone(194) World with the seed thisIsTheSEED
+
+31r3r3r21,202,193,120,59
+Sunplate(202), Slime Block(193), Mudbrick(120) and Mud(59) World with the seed 31r3r3r21
+
+TILE ID FORMATING:
+
+-6
+Iron Ore
+
+-59
+Mud
+
+-202
+Sunplate
+
+Tile IDs can be found on the Terraria Wiki
+
+-----------------------------------------
+
+-Icemania
+Spawn, most of the surface and rock layer are Ice and Snow
+Gaint ice spikes spawn throughout the surface, May contain secrets within!
+
+-Junglemania
+Spawn, most of the surface and rock layer are Mud and Stone
+Hives Spawn Throughout the world, Definitely contains bees!
+
+-Desertmania
+Spawn, most of the surface and rock layer are Sandstone and Hardend Sand
+Very Bumpy sUrFaCe!
+
+-Meteormania
+Spawn and most of the surface is Stone
+Rock layer is filled with meteorite!
+Meteors have fallen throughout most of the surface!
+Meteor pyramids spawn throughout the surface, May contain secrets within!
+
+-Rainy Day
+The entire sky is FILLED with clouds!
+Spawn is in the sky!
+
+-Cavemania
+Giant caves throughout the world
+Large dirt spikes spawn underground!
+A large Pyramid of Granite and Marble is in the center of the world, May contain secrets within!
+
+- Nuked
+Spawn, most of the surface and rock layer is dirt
+There is NO normal GRASS or TREES
+Above the surface and in liquids a geiger counter starts ticking!
+If you stay in these places too long you start taking SERIOUS damage!
+
+-Trapmania
+Traps generate all over!
+Watch out for cracked stone, it breaks when you step on it!
+
+
+-More Coming in the future!!
+V2 -- Joven-Cyboogiest

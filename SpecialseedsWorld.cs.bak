@@ -1,0 +1,681 @@
+using System.Collections.Generic;
+using System.Linq;
+using AdvancedWorldGen.Base;
+using Specialseeds1point4.Tiles;
+using Terraria;
+using Terraria.GameContent.Generation;
+using Terraria.ID;
+using Terraria.IO;
+using Terraria.ModLoader;
+using Terraria.WorldBuilding;
+
+namespace Specialseeds1point4;
+
+public class SpecialseedsWorld : ModSystem
+{
+	public List<int> seedsToDo = new List<int>();
+
+	public int currentSelectedSeed;
+
+	public int worldSpikes;
+
+	public int worldBaubles;
+
+	public int meteors;
+
+	public int zone;
+
+	public override void PostUpdatePlayers()
+	{
+		//IL_0024: Unknown result type (might be due to invalid IL or missing references)
+		for (int i = 0; i < Main.PlayerList.Count(); i++)
+		{
+			Player player = Main.player[i];
+			SceneMetrics metrics = Main.SceneMetrics;
+			if (seedsToDo.Contains(4) && (double)player.Center.Y <= Main.worldSurface * 16.0)
+			{
+				player.AddBuff(86, 55);
+				player.jumpSpeedBoost *= 2f;
+				player.ZoneMeteor = true;
+				metrics.MeteorTileCount = 169;
+				if (player.velocity.Y > player.maxFallSpeed / 1.7f)
+				{
+					player.velocity.Y = player.maxFallSpeed / 1.7f;
+				}
+			}
+		}
+	}
+
+	public override void ModifyWorldGenTasks(List<GenPass> tasks, ref float totalWeight)
+	{
+		if (API.OptionsContains(new string[1] { "Icemania" }))
+		{
+			seedsToDo.Add(1);
+		}
+		if (API.OptionsContains(new string[1] { "Junglemania" }))
+		{
+			seedsToDo.Add(2);
+		}
+		if (API.OptionsContains(new string[1] { "Desertmania" }))
+		{
+			seedsToDo.Add(3);
+		}
+		if (API.OptionsContains(new string[1] { "Meteormania" }))
+		{
+			seedsToDo.Add(4);
+		}
+		if (API.OptionsContains(new string[1] { "RainyDay" }))
+		{
+			seedsToDo.Add(5);
+		}
+		if (API.OptionsContains(new string[1] { "Cavemania" }))
+		{
+			seedsToDo.Add(6);
+		}
+		if (API.OptionsContains(new string[1] { "Nuked" }))
+		{
+			seedsToDo.Add(7);
+		}
+		if (API.OptionsContains(new string[1] { "Trapmania" }))
+		{
+			seedsToDo.Add(8);
+		}
+		int genIndex = tasks.FindIndex((GenPass genpass) => genpass.Name.Equals("Shinies"));
+		if (Main.maxTilesX < 6000)
+		{
+			worldBaubles = Main.rand.Next(30, 43);
+		}
+		else if (Main.maxTilesX < 8000)
+		{
+			worldBaubles = Main.rand.Next(43, 53);
+		}
+		else
+		{
+			worldBaubles = Main.rand.Next(50, 63);
+		}
+		if (API.OptionsContains(new string[1] { "Nuked" }))
+		{
+			tasks.RemoveAt(tasks.FindIndex((GenPass genpass) => genpass.Name.Equals("Grass")));
+			tasks.RemoveAt(tasks.FindIndex((GenPass genpass) => genpass.Name.Equals("Spreading Grass")));
+			tasks.RemoveAt(tasks.FindIndex((GenPass genpass) => genpass.Name.Equals("Planting Trees")));
+		}
+		if (API.OptionsContains(new string[1] { "Trapmania" }))
+		{
+			tasks.RemoveAt(tasks.FindIndex((GenPass genpass) => genpass.Name.Equals("Wavy Caves")));
+			tasks.Insert(tasks.FindIndex((GenPass genpass) => genpass.Name.Equals("Traps")) + 1, new PassLegacy("Traps 2", Traps2));
+			tasks.Insert(tasks.FindIndex((GenPass genpass) => genpass.Name.Equals("Traps")) + 1, new PassLegacy("Traps 2", Traps2));
+			tasks.Insert(tasks.FindIndex((GenPass genpass) => genpass.Name.Equals("Traps")) + 1, new PassLegacy("Traps 2", Traps2));
+		}
+		genIndex = tasks.FindIndex((GenPass genpass) => genpass.Name.Equals("Small Holes")) - 1;
+		tasks.Insert(genIndex, new PassLegacy("Seeds main", GenerateWorld));
+		genIndex = tasks.FindIndex((GenPass genpass) => genpass.Name.Equals("Small Holes")) + 1;
+		tasks.Insert(genIndex, new PassLegacy("Small Hole Extras", SmallHoleExtras));
+		genIndex = tasks.FindIndex((GenPass genpass) => genpass.Name.Equals("Hives")) + 1;
+		tasks.Insert(genIndex, new PassLegacy("World Extras", GenerateExtras));
+		if (API.OptionsContains(new string[1] { "CUS" }))
+		{
+			genIndex = tasks.FindIndex((GenPass genpass) => genpass.Name.Equals("Seeds main")) + 1;
+			tasks.Insert(genIndex, new PassLegacy("Custom World Generation", CustomWorld));
+		}
+	}
+
+	private void Traps2(GenerationProgress progress, GameConfiguration gameConfiguration)
+	{
+		if (WorldGen.notTheBees)
+		{
+			return;
+		}
+		WorldGen.placingTraps = true;
+		progress.Message = Lang.gen[34].Value;
+		float num336 = (float)Main.maxTilesX * 0.05f;
+		if (WorldGen.getGoodWorldGen)
+		{
+			num336 *= 1.5f;
+		}
+		for (int num337 = 0; (float)num337 < num336; num337++)
+		{
+			progress.Set((float)num337 / num336 / 2f);
+			for (int num338 = 0; num338 < 1150; num338++)
+			{
+				int num339 = WorldGen.genRand.Next(200, Main.maxTilesX - 200);
+				int num340 = WorldGen.genRand.Next((int)Main.worldSurface, Main.maxTilesY - 210);
+				while (WorldGen.oceanDepths(num339, num340))
+				{
+					num339 = WorldGen.genRand.Next(200, Main.maxTilesX - 200);
+					num340 = WorldGen.genRand.Next((int)Main.worldSurface, Main.maxTilesY - 210);
+				}
+				if (Main.tile[num339, num340].wall == 0 && WorldGen.placeTrap(num339, num340))
+				{
+					break;
+				}
+			}
+		}
+		num336 = (float)Main.maxTilesX * 0.003f;
+		if (WorldGen.getGoodWorldGen)
+		{
+			num336 *= 1.5f;
+		}
+		for (int num341 = 0; (float)num341 < num336; num341++)
+		{
+			progress.Set((float)num341 / num336 / 2f + 0.5f);
+			for (int num342 = 0; num342 < 20000; num342++)
+			{
+				int num343 = WorldGen.genRand.Next((int)((double)Main.maxTilesX * 0.15), (int)((double)Main.maxTilesX * 0.85));
+				int num344 = WorldGen.genRand.Next((int)Main.worldSurface + 20, Main.maxTilesY - 210);
+				if (Main.tile[num343, num344].wall == 187 && WorldGen.PlaceSandTrap(num343, num344))
+				{
+					break;
+				}
+			}
+		}
+		if (WorldGen.drunkWorldGen)
+		{
+			for (int num345 = 0; num345 < 8; num345++)
+			{
+				progress.Message = Lang.gen[34].Value;
+				num336 = 100f;
+				for (int num346 = 0; (float)num346 < num336; num346++)
+				{
+					progress.Set((float)num346 / num336);
+				}
+			}
+		}
+		WorldGen.placingTraps = false;
+	}
+
+	private void SmallHoleExtras(GenerationProgress progress, GameConfiguration gameConfiguration)
+	{
+		if (seedsToDo.Contains(6))
+		{
+			GenerateRandomSpikes(-40, Main.maxTilesY / 2 + 250, 1, 0, displacement: true, 55, 54, generatePlatform: false, -0.5f, 0.7f, generateChest: false, 2, 80, 6, 14);
+		}
+	}
+
+	private void CustomWorld(GenerationProgress progress, GameConfiguration gameConfiguration)
+	{
+	}
+
+	private void GenerateWorld(GenerationProgress progress, GameConfiguration gameConfiguration)
+	{
+		progress.Message = "Breaking The Balance";
+		for (int e = 0; e < seedsToDo.Count; e++)
+		{
+			currentSelectedSeed = seedsToDo.ElementAt(e);
+			switch (currentSelectedSeed)
+			{
+			case 1:
+			{
+				for (int i = 0; i < (int)((double)(Main.maxTilesX * Main.maxTilesY) * 6E-05); i++)
+				{
+					WorldGen.TileRunner(WorldGen.genRand.Next(WorldGen.genRand.Next(500, 700), Main.maxTilesX - WorldGen.genRand.Next(500, 700)), WorldGen.genRand.Next(0, (int)WorldGen.worldSurface + 350), WorldGen.genRand.Next(100, 200), 15, 147);
+					WorldGen.TileRunner(WorldGen.genRand.Next(Main.maxTilesX / 2 - WorldGen.genRand.Next(100, 500), Main.maxTilesX / 2 + WorldGen.genRand.Next(100, 500)), WorldGen.genRand.Next(0, Main.maxTilesY + 300), WorldGen.genRand.Next(200, 350), 35, 147);
+				}
+				for (int z = 0; z < (int)((double)(Main.maxTilesX * Main.maxTilesY) * 6E-05); z++)
+				{
+					WorldGen.TileRunner(WorldGen.genRand.Next(WorldGen.genRand.Next(300, 500), Main.maxTilesX / 2 - WorldGen.genRand.Next(300, 500)), WorldGen.genRand.Next((int)WorldGen.worldSurface + 150, Main.maxTilesY - WorldGen.genRand.Next(300, 500)), WorldGen.genRand.Next(80, 110), 1, 161, addTile: true, 0f, 0f, noYChange: true);
+					WorldGen.TileRunner(WorldGen.genRand.Next(Main.maxTilesX / 2 + WorldGen.genRand.Next(300, 500), Main.maxTilesX - WorldGen.genRand.Next(300, 500)), WorldGen.genRand.Next((int)WorldGen.worldSurface + 150, Main.maxTilesY - WorldGen.genRand.Next(300, 500)), WorldGen.genRand.Next(80, 110), 1, 161, addTile: true);
+				}
+				break;
+			}
+			case 2:
+			{
+				for (int j = 0; j < (int)((double)(Main.maxTilesX * Main.maxTilesY) * 6E-05); j++)
+				{
+					WorldGen.TileRunner(WorldGen.genRand.Next(WorldGen.genRand.Next(300, 500), Main.maxTilesX - WorldGen.genRand.Next(300, 500)), WorldGen.genRand.Next((int)WorldGen.worldSurface + WorldGen.genRand.Next(100, 200), Main.maxTilesY - WorldGen.genRand.Next(100, 300)), WorldGen.genRand.Next(130, 190), 2, 59);
+					WorldGen.TileRunner(WorldGen.genRand.Next(Main.maxTilesX / 2 - WorldGen.genRand.Next(100, 300), Main.maxTilesX / 2 + WorldGen.genRand.Next(100, 300)), WorldGen.genRand.Next((int)WorldGen.worldSurface, (int)WorldGen.worldSurface + WorldGen.genRand.Next(300, 400)), WorldGen.genRand.Next(130, 190), 2, 59);
+					WorldGen.TileRunner(WorldGen.genRand.Next(WorldGen.genRand.Next(300, 500), Main.maxTilesX - WorldGen.genRand.Next(300, 500)), WorldGen.genRand.Next((int)WorldGen.worldSurface + WorldGen.genRand.Next(100, 200), Main.maxTilesY - WorldGen.genRand.Next(300, 500)), WorldGen.genRand.Next(50, 90), 1, 225);
+				}
+				break;
+			}
+			case 3:
+			{
+				for (int k = 0; k < (int)((double)(Main.maxTilesX * Main.maxTilesY) * 6E-05); k++)
+				{
+					WorldGen.TileRunner(WorldGen.genRand.Next(WorldGen.genRand.Next(500, 700), Main.maxTilesX - WorldGen.genRand.Next(500, 700)), WorldGen.genRand.Next(0, (int)WorldGen.worldSurface + 350), WorldGen.genRand.Next(100, 200), 15, 53);
+					WorldGen.TileRunner(WorldGen.genRand.Next(Main.maxTilesX / 2 - WorldGen.genRand.Next(100, 500), Main.maxTilesX / 2 + WorldGen.genRand.Next(100, 500)), WorldGen.genRand.Next(0, Main.maxTilesY + 300), WorldGen.genRand.Next(200, 350), 35, 53);
+					WorldGen.TileRunner(WorldGen.genRand.Next(WorldGen.genRand.Next(300, 500), Main.maxTilesX - WorldGen.genRand.Next(300, 500)), WorldGen.genRand.Next((int)WorldGen.worldSurface + WorldGen.genRand.Next(100, 200), Main.maxTilesY - WorldGen.genRand.Next(300, 500)), WorldGen.genRand.Next(50, 90), 1, 396);
+				}
+				GenerateBauble(397, 15, 35, 2);
+				GenerateBauble(396, 25, 35, 4);
+				break;
+			}
+			case 4:
+			{
+				for (int l = 0; l < (int)((double)(Main.maxTilesX * Main.maxTilesY) * 6E-05); l++)
+				{
+					WorldGen.TileRunner(WorldGen.genRand.Next(Main.maxTilesX / 2 - WorldGen.genRand.Next(100, 500), Main.maxTilesX / 2 + WorldGen.genRand.Next(100, 500)), WorldGen.genRand.Next(0, Main.maxTilesY + 300), WorldGen.genRand.Next(200, 350), 35, 1);
+					WorldGen.TileRunner(WorldGen.genRand.Next(WorldGen.genRand.Next(300, 500), Main.maxTilesX / 2 - WorldGen.genRand.Next(300, 500)), WorldGen.genRand.Next((int)WorldGen.worldSurface + 95, (int)WorldGen.worldSurface + 350), WorldGen.genRand.Next(40, 60), 2, 368);
+					WorldGen.TileRunner(WorldGen.genRand.Next(Main.maxTilesX / 2 + WorldGen.genRand.Next(300, 500), Main.maxTilesX - WorldGen.genRand.Next(300, 500)), WorldGen.genRand.Next((int)WorldGen.worldSurface + 95, (int)WorldGen.worldSurface + 350), WorldGen.genRand.Next(40, 60), 2, 368);
+					WorldGen.TileRunner(WorldGen.genRand.Next(WorldGen.genRand.Next(300, 500), Main.maxTilesX / 2 - WorldGen.genRand.Next(300, 500)), WorldGen.genRand.Next((int)WorldGen.worldSurface + 95, (int)WorldGen.worldSurface + 350), WorldGen.genRand.Next(40, 60), 2, 367);
+					WorldGen.TileRunner(WorldGen.genRand.Next(Main.maxTilesX / 2 + WorldGen.genRand.Next(300, 500), Main.maxTilesX - WorldGen.genRand.Next(300, 500)), WorldGen.genRand.Next((int)WorldGen.worldSurface + 95, (int)WorldGen.worldSurface + 350), WorldGen.genRand.Next(40, 60), 2, 367);
+					WorldGen.TileRunner(WorldGen.genRand.Next(WorldGen.genRand.Next(300, 500), Main.maxTilesX / 2 - WorldGen.genRand.Next(300, 500)), WorldGen.genRand.Next((int)WorldGen.worldSurface + WorldGen.genRand.Next(100, 200), Main.maxTilesY - WorldGen.genRand.Next(300, 500)), WorldGen.genRand.Next(40, 60), 2, 37);
+					WorldGen.TileRunner(WorldGen.genRand.Next(Main.maxTilesX / 2 + WorldGen.genRand.Next(300, 500), Main.maxTilesX - WorldGen.genRand.Next(300, 500)), WorldGen.genRand.Next((int)WorldGen.worldSurface + WorldGen.genRand.Next(100, 200), Main.maxTilesY - WorldGen.genRand.Next(300, 500)), WorldGen.genRand.Next(40, 60), 2, 37);
+					WorldGen.TileRunner(WorldGen.genRand.Next(WorldGen.genRand.Next(300, 500), Main.maxTilesX / 2 - WorldGen.genRand.Next(300, 500)), WorldGen.genRand.Next((int)WorldGen.worldSurface + WorldGen.genRand.Next(100, 200), Main.maxTilesY - WorldGen.genRand.Next(300, 500)), WorldGen.genRand.Next(20, 40), 2, 56);
+					WorldGen.TileRunner(WorldGen.genRand.Next(Main.maxTilesX / 2 + WorldGen.genRand.Next(300, 500), Main.maxTilesX - WorldGen.genRand.Next(300, 500)), WorldGen.genRand.Next((int)WorldGen.worldSurface + WorldGen.genRand.Next(100, 200), Main.maxTilesY - WorldGen.genRand.Next(300, 500)), WorldGen.genRand.Next(20, 40), 2, 56);
+				}
+				break;
+			}
+			case 5:
+			{
+				for (int m = 0; m < (int)((double)(Main.maxTilesX * Main.maxTilesY) * 6E-05); m++)
+				{
+					WorldGen.TileRunner(WorldGen.genRand.Next(WorldGen.genRand.Next(300, 500), Main.maxTilesX / 2 - WorldGen.genRand.Next(300, 500)), WorldGen.genRand.Next(60, 125), WorldGen.genRand.Next(10, 30), 1, 189, addTile: true);
+					WorldGen.TileRunner(WorldGen.genRand.Next(Main.maxTilesX / 2 + WorldGen.genRand.Next(300, 500), Main.maxTilesX - WorldGen.genRand.Next(300, 500)), WorldGen.genRand.Next(60, 125), WorldGen.genRand.Next(10, 30), 1, 189, addTile: true);
+					WorldGen.TileRunner(WorldGen.genRand.Next(Main.maxTilesX / 2 - WorldGen.genRand.Next(300, 500), Main.maxTilesX / 2 + WorldGen.genRand.Next(300, 500)), WorldGen.genRand.Next(100, 125), WorldGen.genRand.Next(10, 30), 2, 189, addTile: true);
+					WorldGen.TileRunner(WorldGen.genRand.Next(WorldGen.genRand.Next(300, 500), Main.maxTilesX / 2 - WorldGen.genRand.Next(300, 500)), WorldGen.genRand.Next(100, 150), WorldGen.genRand.Next(1, 20), 1, 196, addTile: true);
+					WorldGen.TileRunner(WorldGen.genRand.Next(Main.maxTilesX / 2 + WorldGen.genRand.Next(300, 500), Main.maxTilesX - WorldGen.genRand.Next(300, 500)), WorldGen.genRand.Next(100, 150), WorldGen.genRand.Next(1, 20), 1, 196, addTile: true);
+				}
+				break;
+			}
+			case 6:
+			{
+				GenerateSpike(Main.maxTilesX / 2, Main.maxTilesY / 2, Main.maxTilesY / 8, Main.maxTilesY / 4, 367, 368, displacement: true, 180, 178, generatePlatform: false, 0.4f, 1.4f, generateChest: true, 2, 0);
+				for (int num42070 = 0; num42070 < (int)((double)(Main.maxTilesX * Main.maxTilesY) * 0.00013); num42070++)
+				{
+					float value17 = (float)((double)num42070 / ((double)(Main.maxTilesX * Main.maxTilesY) * 0.00013));
+					progress.Set(value17);
+					if (WorldGen.rockLayerHigh <= (double)Main.maxTilesY)
+					{
+						int type7 = -1;
+						if (WorldGen.genRand.Next(10) == 0)
+						{
+							type7 = -2;
+						}
+						WorldGen.TileRunner(WorldGen.genRand.Next(0, Main.maxTilesX), WorldGen.genRand.Next((int)WorldGen.rockLayerHigh, Main.maxTilesY), WorldGen.genRand.Next(15, 35), WorldGen.genRand.Next(20, 600), type7);
+					}
+				}
+				break;
+			}
+			case 7:
+			{
+				GenerateFloor(0, useAltTile: false, 0);
+				for (int num42071 = 0; num42071 < (int)((double)(Main.maxTilesX * Main.maxTilesY) * 0.00013); num42071++)
+				{
+					float value18 = (float)((double)num42071 / ((double)(Main.maxTilesX * Main.maxTilesY) * 0.00013));
+					progress.Set(value18);
+					if (WorldGen.worldSurface - 100.0 <= (double)Main.maxTilesY)
+					{
+						int type8 = -1;
+						if (WorldGen.genRand.Next(10) == 0)
+						{
+							type8 = -2;
+						}
+						WorldGen.TileRunner(WorldGen.genRand.Next(Main.maxTilesX / 2 - 800, Main.maxTilesX / 2 + 800), WorldGen.genRand.Next((int)WorldGen.worldSurface - 100, Main.maxTilesY / 2 + 300), WorldGen.genRand.Next(15, 55), 5, type8);
+					}
+				}
+				break;
+			}
+			case 8:
+			{
+				for (int num42069 = 0; num42069 < Main.maxTilesY; num42069 += 40)
+				{
+					for (int num42073 = 0; num42073 < Main.maxTilesX; num42073 += 40)
+					{
+						WorldGen.TileRunner(num42073, num42069, WorldGen.genRand.Next(num42069 / 80), WorldGen.genRand.Next(20, 400), ModContent.TileType<CrackedStone>());
+					}
+				}
+				for (int num42072 = 0; num42072 < (int)((double)(Main.maxTilesX * Main.maxTilesY) * 0.00013); num42072++)
+				{
+					float value19 = (float)((double)num42072 / ((double)(Main.maxTilesX * Main.maxTilesY) * 0.00013));
+					progress.Set(value19);
+					if (WorldGen.rockLayerHigh <= (double)Main.maxTilesY)
+					{
+						int type9 = -1;
+						if (WorldGen.genRand.Next(10) == 0)
+						{
+							type9 = -2;
+						}
+						int i2 = WorldGen.genRand.Next(0, Main.maxTilesX);
+						int y = WorldGen.genRand.Next((int)WorldGen.rockLayerHigh, Main.maxTilesY);
+						int scale = WorldGen.genRand.Next(20, 25);
+						int strength = WorldGen.genRand.Next(10, 40);
+						WorldGen.TileRunner(i2, y, scale + 5, strength, 232);
+						WorldGen.TileRunner(i2, y, scale, strength, type9);
+					}
+				}
+				break;
+			}
+			}
+		}
+		seedsToDo.Clear();
+	}
+
+	private unsafe void GenerateExtras(GenerationProgress progress, GameConfiguration gameConfiguration)
+	{
+		progress.Message = "Breaking The Rest";
+		for (int e = 0; e < seedsToDo.Count; e++)
+		{
+			currentSelectedSeed = seedsToDo.ElementAt(e);
+			switch (currentSelectedSeed)
+			{
+			case 1:
+				GenerateRandomSpikes(115, 115, 161, 206, displacement: true, 84, 40, generatePlatform: true, -0.4f, 0.7f, generateChest: true, 22, 50, 9, 14);
+				GenerateBauble(161, 15, 35, 2);
+				break;
+			case 2:
+				GenerateBauble(225, 35, 45, 1);
+				break;
+			case 3:
+				GenerateRandomSpikes(45, 115, 274, 151, displacement: false, 34, 34, generatePlatform: false, 0.4f, 1.4f, generateChest: true, 2, 80, 2, 4);
+				break;
+			case 4:
+			{
+				GenerateRandomSpikes(45, 115, 1, 370, displacement: false, 182, 182, generatePlatform: false, 1f, 1f, generateChest: true, 2, 80, 2, 4);
+				WorldGen.spawnMeteor = true;
+				if (Main.maxTilesX > 6000)
+				{
+					meteors = Main.rand.Next(31, 42);
+				}
+				else if (Main.maxTilesX > 8000)
+				{
+					meteors = Main.rand.Next(41, 50);
+				}
+				else
+				{
+					meteors = Main.rand.Next(48, 58);
+				}
+				for (int r = 0; r < meteors; r++)
+				{
+					int num1 = 0;
+					int num3 = Main.rand.Next(Main.maxTilesX / 2 + 150, Main.maxTilesX - 150);
+					int num5 = Main.rand.Next(150, Main.maxTilesX / 2 - 150);
+					for (int s = 0; s < Main.maxTilesY; s++)
+					{
+						if (r < meteors / 2)
+						{
+							if (WorldGen.SolidTile(num3, num1))
+							{
+								WorldGen.meteor(num3, num1);
+								break;
+							}
+							num1++;
+						}
+						else
+						{
+							if (WorldGen.SolidTile(num5, num1))
+							{
+								WorldGen.meteor(num5, num1);
+								break;
+							}
+							num1++;
+						}
+					}
+				}
+				break;
+			}
+			case 8:
+			{
+				for (int t = 0; t < Main.maxTilesX / 8; t++)
+				{
+					int num2 = 0;
+					int num4 = Main.rand.Next(350, Main.maxTilesX - 350);
+					float value17 = (float)((double)t / (double)(Main.maxTilesX / 8));
+					progress.Set(value17);
+					for (int s2 = 0; s2 < Main.maxTilesY; s2++)
+					{
+						if (s2 < Main.maxTilesY - 200)
+						{
+							if (((Tile*)Main.tile[num4, num2])->LiquidType == 1)
+							{
+								if (WorldGen.SolidTile(num4, num2 - 10))
+								{
+									WorldGen.TileRunner(num4, num2 - 10, WorldGen.genRand.Next(20, 40), 2, ModContent.TileType<CrackedStone>(), addTile: false, 0f, 0f, noYChange: true);
+									break;
+								}
+								for (int i = num2 - 10; i <= num2 - 5; i++)
+								{
+									for (int r2 = num4 - 40; r2 < num4 + 40; r2++)
+									{
+										if (Main.rand.Next(15) != 0)
+										{
+											WorldGen.PlaceTile(r2, i, ModContent.TileType<CrackedStone>());
+										}
+									}
+								}
+								break;
+							}
+							num2++;
+						}
+						else
+						{
+							num4 = Main.rand.Next(150, Main.maxTilesX - 150);
+							s2 = 0;
+						}
+					}
+				}
+				break;
+			}
+			}
+		}
+		seedsToDo.Clear();
+	}
+
+	public unsafe void GenerateFloor(ushort mainTile, bool useAltTile = false, ushort altTile = 0)
+	{
+		//IL_00e1: Expected native int or pointer, but got O
+		//IL_0119: Expected native int or pointer, but got O
+		//IL_0151: Expected native int or pointer, but got O
+		int bottomLeft = 0;
+		int bottomRight = 0;
+		for (int r = 0; r < Main.maxTilesY - Main.maxTilesY / 4; r++)
+		{
+			for (int s = 0; s < Main.maxTilesX; s++)
+			{
+				if (!WorldGen.SolidTile(s, r))
+				{
+					continue;
+				}
+				if ((s == 599 + r || s == Main.maxTilesX - r - 599) && Main.rand.Next(16) != 0)
+				{
+					WorldGen.TileRunner(s, r, WorldGen.genRand.Next(15, 125), 1, mainTile);
+				}
+				if (s <= 600 + r + Main.rand.Next(-50, 50) || s >= Main.maxTilesX - 600 - r + Main.rand.Next(-50, 50))
+				{
+					continue;
+				}
+				if (bottomLeft == 0 && r == Main.maxTilesY - Main.maxTilesY / 4 - 1)
+				{
+					bottomLeft = s;
+				}
+				bottomRight = s;
+				if (useAltTile)
+				{
+					if (Main.rand.Next(3) != 0)
+					{
+						((Tile*)(nint)Main.tile[s, r])->type = mainTile;
+						((Tile*)Main.tile[s, r])->IsHalfBlock = false;
+						((Tile*)Main.tile[s, r])->Slope = SlopeType.Solid;
+					}
+					else
+					{
+						((Tile*)(nint)Main.tile[s, r])->type = altTile;
+						((Tile*)Main.tile[s, r])->IsHalfBlock = false;
+						((Tile*)Main.tile[s, r])->Slope = SlopeType.Solid;
+					}
+				}
+				else
+				{
+					((Tile*)(nint)Main.tile[s, r])->type = mainTile;
+					((Tile*)Main.tile[s, r])->IsHalfBlock = false;
+					((Tile*)Main.tile[s, r])->Slope = SlopeType.Solid;
+				}
+			}
+		}
+		for (int i = 0; i < bottomRight; i++)
+		{
+			if (i > bottomLeft)
+			{
+				WorldGen.TileRunner(i, Main.maxTilesY - Main.maxTilesY / 4, WorldGen.genRand.Next(15, 125), 1, mainTile, addTile: true);
+			}
+		}
+	}
+
+	public void GenerateBauble(int type, int sizeMin, int sizeMax, int strength)
+	{
+		for (int r = 0; r < worldBaubles; r++)
+		{
+			int num1 = 200;
+			int num2 = Main.rand.Next(600, Main.maxTilesX - 600);
+			for (int s = 0; s < Main.maxTilesY; s++)
+			{
+				if (!WorldGen.SolidTile(num2, num1))
+				{
+					num1++;
+					continue;
+				}
+				WorldGen.TileRunner(num2, num1, WorldGen.genRand.Next(sizeMin, sizeMax), strength, type);
+				break;
+			}
+		}
+	}
+
+	public void GenerateRandomSpikes(int spikeHieghtFromCenter, int spikeDepthFromCenter, ushort tileType, ushort altTileType, bool displacement, ushort wallType, ushort altWalltype, bool generatePlatform, float minWide, float maxWide, bool generateChest, int chestType, int chestDepth, int worldSpikesMin, int worldSpikesMax)
+	{
+		if (Main.maxTilesX < 6000)
+		{
+			worldSpikes = Main.rand.Next(worldSpikesMin, worldSpikesMax);
+		}
+		else if (Main.maxTilesX < 8000)
+		{
+			worldSpikes = Main.rand.Next(worldSpikesMin * 2, worldSpikesMax * 2);
+		}
+		else
+		{
+			worldSpikes = Main.rand.Next(worldSpikesMin * 4, worldSpikesMax * 4);
+		}
+		for (int r = 0; r < worldSpikes; r++)
+		{
+			int num1 = 200;
+			int num2 = Main.rand.Next(600, Main.maxTilesX - 600);
+			for (int s = 0; s < Main.maxTilesY; s++)
+			{
+				if (!WorldGen.SolidTile(num2, num1))
+				{
+					num1++;
+					continue;
+				}
+				GenerateSpike(num2, num1, spikeHieghtFromCenter, spikeDepthFromCenter, tileType, altTileType, displacement, wallType, altWalltype, generatePlatform, minWide, maxWide, generateChest, chestType, chestDepth);
+				break;
+			}
+		}
+	}
+
+	public unsafe void GenerateSpike(int d, int e, int spikeHieghtFromCenter, int spikeDepthFromCenter, ushort tileType, ushort altTileType, bool displacement, ushort wallType, ushort altWalltype, bool generatePlatform, float minWide, float maxWide, bool generateChest, int chestType, int chestDepth)
+	{
+		//IL_014c: Expected native int or pointer, but got O
+		//IL_01e5: Expected native int or pointer, but got O
+		//IL_024a: Expected native int or pointer, but got O
+		//IL_02bf: Expected native int or pointer, but got O
+		//IL_0321: Expected native int or pointer, but got O
+		//IL_0397: Expected native int or pointer, but got O
+		//IL_0403: Expected native int or pointer, but got O
+		int num7 = e - spikeHieghtFromCenter;
+		int num4 = 1;
+		int num5 = e + spikeDepthFromCenter;
+		float num6 = 0f;
+		for (int i = num7; i < num5; i++)
+		{
+			if (generatePlatform)
+			{
+				WorldGen.TileRunner(WorldGen.genRand.Next(d - 120, d + 120), WorldGen.genRand.Next(num5, num5 + 20), WorldGen.genRand.Next(15, 45), 1, altTileType, addTile: true);
+				WorldGen.TileRunner(WorldGen.genRand.Next(d - 135, d + 135), WorldGen.genRand.Next(num5, num5 + 20), WorldGen.genRand.Next(1, 25), 1, tileType, addTile: true);
+			}
+			for (int j = d - num4; j < d + num4 - 1; j++)
+			{
+				if (generateChest)
+				{
+					if (j < d + 5 && j > d - 6 && i < e + chestDepth && i > e + (chestDepth - 5))
+					{
+						WorldGen.PlaceWall(j, i, wallType, mute: true);
+						((Tile*)Main.tile[j, i])->ClearTile();
+						continue;
+					}
+					if (Main.rand.Next(1) == 0)
+					{
+						WorldGen.PlaceWall(j, i, wallType, mute: true);
+					}
+					else
+					{
+						WorldGen.PlaceWall(j, i, altWalltype, mute: true);
+					}
+					if (CheckValidTile(j, i))
+					{
+						((Tile*)(nint)Main.tile[j, i])->type = tileType;
+						((Tile*)Main.tile[j, i])->IsActive = true;
+						((Tile*)Main.tile[j, i])->IsHalfBlock = false;
+						((Tile*)Main.tile[j, i])->Slope = SlopeType.Solid;
+					}
+					if (displacement)
+					{
+						int blockX2 = j + Main.rand.Next(-2, 2);
+						if (blockX2 < d + 5 && blockX2 > d - 6 && i < e + chestDepth && i > e + (chestDepth - 5))
+						{
+							if (CheckValidTile(j, i))
+							{
+								((Tile*)(nint)Main.tile[j, i])->type = altTileType;
+								((Tile*)Main.tile[j, i])->IsActive = true;
+								((Tile*)Main.tile[j, i])->IsHalfBlock = false;
+								((Tile*)Main.tile[j, i])->Slope = SlopeType.Solid;
+							}
+						}
+						else if (CheckValidTile(blockX2, i))
+						{
+							((Tile*)(nint)Main.tile[blockX2, i])->type = altTileType;
+							((Tile*)Main.tile[blockX2, i])->IsActive = true;
+							((Tile*)Main.tile[blockX2, i])->IsHalfBlock = false;
+							((Tile*)Main.tile[blockX2, i])->Slope = SlopeType.Solid;
+						}
+					}
+					else if (Main.rand.Next(2) == 0 && CheckValidTile(j, i))
+					{
+						((Tile*)(nint)Main.tile[j, i])->type = altTileType;
+						((Tile*)Main.tile[j, i])->IsActive = true;
+						((Tile*)Main.tile[j, i])->IsHalfBlock = false;
+						((Tile*)Main.tile[j, i])->Slope = SlopeType.Solid;
+					}
+					continue;
+				}
+				if (CheckValidTile(j, i))
+				{
+					((Tile*)(nint)Main.tile[j, i])->type = tileType;
+					((Tile*)Main.tile[j, i])->IsActive = true;
+					((Tile*)Main.tile[j, i])->IsHalfBlock = false;
+					((Tile*)Main.tile[j, i])->Slope = SlopeType.Solid;
+				}
+				if (displacement)
+				{
+					int blockX = j + Main.rand.Next(-2, 2);
+					if (CheckValidTile(blockX, i))
+					{
+						((Tile*)(nint)Main.tile[blockX, i])->type = altTileType;
+						((Tile*)Main.tile[blockX, i])->IsActive = true;
+						((Tile*)Main.tile[blockX, i])->IsHalfBlock = false;
+						((Tile*)Main.tile[blockX, i])->Slope = SlopeType.Solid;
+					}
+				}
+				else if (Main.rand.Next(2) == 0 && CheckValidTile(j, i))
+				{
+					((Tile*)(nint)Main.tile[j, i])->type = altTileType;
+					((Tile*)Main.tile[j, i])->IsActive = true;
+					((Tile*)Main.tile[j, i])->IsHalfBlock = false;
+					((Tile*)Main.tile[j, i])->Slope = SlopeType.Solid;
+				}
+			}
+			num6 += Main.rand.NextFloat(minWide, maxWide);
+			num4 = (int)num6;
+		}
+		if (generateChest)
+		{
+			WorldGen.AddBuriedChest(d, e + chestDepth, 0, notNearOtherChests: true, chestType, trySlope: false, 0);
+		}
+	}
+
+	public bool CheckValidTile(int n, int m)
+	{
+		if (Main.tile[n, m].type != 41 || Main.tile[n, m].type != 43 || Main.tile[n, m].type != 44)
+		{
+			return true;
+		}
+		return false;
+	}
+}
