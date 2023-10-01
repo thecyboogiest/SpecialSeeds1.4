@@ -1,0 +1,10 @@
+author = JovenCyboogiest
+version = 2.3.1
+displayName = Special Seeds 1.4
+homepage = https://github.com/thecyboogiest/SpecialSeeds1.4
+hideCode = false
+hideResources = false
+includeSource = true
+buildIgnore = *.csproj, *.user, obj\*, bin\*, .vs\*, Old\*
+includePDB = true
+modReferences = AdvancedWorldGen

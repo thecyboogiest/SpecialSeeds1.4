@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Security.Cryptography.X509Certificates;
 using AdvancedWorldGen.Base;
 using Humanizer;
 using Microsoft.Xna.Framework;
 using MonoMod.Logs;
 using Specialseeds1point4.Tiles;
+using Specialseeds1point4.UI;
 using Terraria;
 using Terraria.Audio;
 using Terraria.GameContent.Generation;
@@ -13,6 +16,7 @@ using Terraria.ID;
 using Terraria.IO;
 using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
+using Terraria.UI;
 using Terraria.WorldBuilding;
 
 namespace Specialseeds1point4;
@@ -49,24 +53,17 @@ public class SpecialseedsWorld : ModSystem
 					player.velocity.Y = player.maxFallSpeed / 1.7f;
 				}
 			}
+
+
 		}
 	}
     public override void PreWorldGen()
     {
-        Seeds.activatedSeeds.Clear();
-        Mod awg = ModLoader.GetMod("AdvancedWorldGen");
-
-        bool CheckOptionContains(string seedName)
-        {
-            return (bool)awg.Call("Options Contains", seedName);
-        }
-
-        if (CheckOptionContains("Custom"))
-        {
-            // [143][28]|9qj8r83ji
-            
-        }
+        
+        
     }
+    
+    
     public override void LoadWorldData(TagCompound tag)
     {
         if (tag.ContainsKey("activatedSeeds"))
@@ -74,10 +71,22 @@ public class SpecialseedsWorld : ModSystem
             List<string> acts = tag["activatedSeeds"] as List<string>;
             Seeds.activatedSeeds = acts;
         }
+
+
     }
     public override void SaveWorldData(TagCompound tag)
     {
-        tag["Seeds.activatedSeeds"] = Seeds.activatedSeeds;
+        tag["activatedSeeds"] = Seeds.activatedSeeds;
+    }
+
+    public override void PostWorldGen()
+    {
+
+    }
+
+    public override void OnWorldUnload()
+    {
+        Seeds.activatedSeeds.Clear();
     }
 
     public override void ModifyWorldGenTasks(List<GenPass> tasks, ref double totalWeight)
@@ -130,7 +139,7 @@ public class SpecialseedsWorld : ModSystem
         tasks.Insert(genIndex, new PassLegacy("World Extras", GenerateExtras));
         genIndex = tasks.FindIndex((GenPass genpass) => genpass.Name.Equals("Final Cleanup")) - 1;
         tasks.Insert(genIndex, new PassLegacy("Post Cleanup", PostCleanUpTasks));
-        if (CheckOptionContains("Custom"))
+        if (Specialseeds1point4.layers.Count > 0)
         {
             genIndex = tasks.FindIndex((GenPass genpass) => genpass.Name.Equals("Seeds main")) + 1;
             tasks.Insert(genIndex, new PassLegacy("Custom World Generation", CustomWorld));
@@ -208,26 +217,45 @@ public class SpecialseedsWorld : ModSystem
 
 	private void CustomWorld(GenerationProgress progress, GameConfiguration gameConfiguration)
 	{
-        //seed,1,2,3,4
-        string seed = WorldGen.currentWorldSeed;
-        List<string> tileIds = seed.Split(",").ToList();
-        tileIds.RemoveAt(0);
-        foreach (string id in tileIds)
-        {
-            int parsed = 0;
-            if (int.TryParse(id, out parsed))
-            {
-                for (int i = 0; i < (int)((double)(Main.maxTilesX * Main.maxTilesY) * 6E-05); i++)
-                    WorldGen.TileRunner(WorldGen.genRand.Next(WorldGen.genRand.Next(500, 700), Main.maxTilesX - WorldGen.genRand.Next(500, 700)), WorldGen.genRand.Next(0, (int)Main.worldSurface + 350), WorldGen.genRand.Next(100, 200), 15, parsed);
+        progress.Message = "Custom World Generation";
 
+        List<int> tileIdsToPlace = new();
+        for(int l = 0; l < Specialseeds1point4.layers.Count; l++)
+        {
+
+            if (Specialseeds1point4.layers[l].tiles.Count > 0)
+            {
+                foreach (CustomSeedTile tile in Specialseeds1point4.SelectedTiles(Specialseeds1point4.layers[l].tiles))
+                {
+                    if (tile.selected)
+                        tileIdsToPlace.Add(tile.id);
+                    tile.selected = false;
+
+                }
+
+                int layerId = l;
+                int layerHeight = ((Main.maxTilesY / Specialseeds1point4.layers.Count) * layerId) + 50;
+
+                if (tileIdsToPlace.Count > 0)
+                    for (int i = 20; i < Main.maxTilesX - 20; i += 5)
+                        for (int j = 20; j < Main.maxTilesY; j++)
+                        {
+                            int sin = (int)(Math.Sin(i / 60f) * 30);
+                            int pointBeforeCheck = layerHeight + sin;
+                            int point = pointBeforeCheck < 20 ? 20 : (pointBeforeCheck > Main.maxTilesY - 20 ? Main.maxTilesY - 20 : pointBeforeCheck);
+
+                            if (j >= point)
+                                WorldGen.TileRunner(i, j, 10, 1, tileIdsToPlace[Main.rand.Next(0, tileIdsToPlace.Count)], false, 0, 0, false, true);
+                        }
+                tileIdsToPlace.Clear();
             }
 
         }
 
-        
+
     }
 
-	private void GenerateWorld(GenerationProgress progress, GameConfiguration gameConfiguration)
+    private void GenerateWorld(GenerationProgress progress, GameConfiguration gameConfiguration)
 	{
 		progress.Message = "Breaking The Balance";
 		if(Seeds.Enabled(Seeds.Icemania))

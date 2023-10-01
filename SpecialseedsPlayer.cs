@@ -27,11 +27,8 @@ public class SpecialseedsPlayer : ModPlayer
 	public float breakStoneCooldown;
 
 	public List<BreakTile> tilesToBreak = new List<BreakTile>();
-    public override void ModifyStartingInventory(IReadOnlyDictionary<string, List<Item>> itemsByMod, bool mediumCoreDeath)
-    {
-        if (Seeds.Enabled(Seeds.Upside))
-            itemsByMod["Terraria"].Add(new Item(ItemID.GrapplingHook, 1));
-    }
+
+   
     public override void PostUpdateEquips()
     {
         if (Seeds.Enabled(Seeds.Upside))
@@ -41,6 +38,23 @@ public class SpecialseedsPlayer : ModPlayer
             Player.gravDir = -1f;
         }
     }
+
+    public override void SyncPlayer(int toWho, int fromWho, bool newPlayer)
+    {
+        if (!newPlayer)
+        {
+            ModPacket packet = Mod.GetPacket();
+            packet.Write(Seeds.activatedSeeds.Count);
+            foreach (string seed in Seeds.activatedSeeds)
+                packet.Write(seed);
+
+        }
+
+    }
+
+
+   
+
     public override void PostUpdate()
 	{
         //Main.NewText(SpecialseedsWorld.Seeds.activatedSeeds.Count);
@@ -78,7 +92,6 @@ public class SpecialseedsPlayer : ModPlayer
                 else
                     tickTimer++;
 
-				Main.NewText(tickTimer + " / " + tickTime);
 
             }
             else
